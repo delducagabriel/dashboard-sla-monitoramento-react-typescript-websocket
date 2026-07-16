@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  sector    String
+  createdAt DateTime    @default(now())
+  agents    Agent[]
+  records   SlaRecord[]
+
+  @@index([sector])
+}
+
+model Agent {
+  id        String      @id @default(cuid())
+  name      String
+  teamId    String
+  team      Team        @relation(fields: [teamId], references: [id])
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  records   SlaRecord[]
+
+  @@index([teamId])
+}
+
+model SlaRecord {
+  id             String   @id @default(cuid())
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id])
+  teamId         String
+  team           Team     @relation(fields: [teamId], references: [id])
+  ticketId       String
+  status         String   @default("completed") // completed, breached, in_progress
+  slaTargetSec   Int      // SLA alvo em segundos (ex: 240 = 4min)
+  responseTimeSec Int     // tempo real de resposta
+  createdAt      DateTime @default(now())
+
+  @@index([teamId, createdAt])
+  @@index([agentId, createdAt])
+  @@index([status])
+  @@index([createdAt])
+}
